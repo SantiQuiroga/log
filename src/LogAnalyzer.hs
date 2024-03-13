@@ -13,19 +13,25 @@ getLogEntryTimeStamp :: LogEntry -> TimeStamp
 getLogEntryTimeStamp (Unknown _) = 0
 getLogEntryTimeStamp (LogEntry _ timeStamp _) = timeStamp
 
+stringLength :: String -> Int
+stringLength = foldr (\_ -> (+) 1) 0
+
 analyzeLog :: String -> LogEntry
 analyzeLog s
   | null s = Unknown ""
-  | length entryType > 1 = Unknown s
+  | stringLength entryType > 1 = Unknown s
   | head entryType == 'I' = LogEntry Info (read timeStamp) message
   | head entryType == 'W' = LogEntry Warning (read timeStamp) message
   | head entryType == 'E' = LogEntry (Error (read errorSeverity)) (read errorTimeStamp) errorMessage
   | otherwise = Unknown s
   where
-    (entryType:timeStamp:messageParts) = splitOn " " s
-    message = unwords messageParts
-    (errorSeverity:errorTimeStamp:errorMessageParts) = messageParts
-    errorMessage = unwords errorMessageParts
+    parts = splitOn " " s
+    entryType = head parts
+    timeStamp = parts !! 1
+    message = unwords (drop 2 parts)
+    errorSeverity = parts !! 1
+    errorTimeStamp = parts !! 2
+    errorMessage = unwords (drop 3 parts)
 
 -- Tree Construction
 insertEntry :: LogEntry -> LogTree -> LogTree
